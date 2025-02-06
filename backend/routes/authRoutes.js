@@ -1,6 +1,10 @@
-import express from "express"
-const router=express.Router()
+import express from "express";
+import { loginUser, logoutUser, registerUser } from "../controllers/authController.js";
+import uploadFile from "../middlewares/multer.js";
+const router = express.Router();
 
-router.get()
+router.post("/register", uploadFile, registerUser);
+router.post("/login",loginUser)
+router.get("/logout",logoutUser)
 
-export default router
+export default router;
