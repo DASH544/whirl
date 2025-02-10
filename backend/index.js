@@ -6,17 +6,15 @@ import cloudinary from "cloudinary";
 //using middlewares
 
 dotenv.config();
-
-
+const app = express();
 cloudinary.v2.config({
   cloud_name: process.env.Cloudinary_Cloud_Name,
   api_key: process.env.Cloudinary_Api,
   api_secret: process.env.Cloudinary_Secret,
 });
-const app = express();
+
 app.use(express.json());
-app.use(cookieParser)
-app.use(express.urlencoded({extended:true}))
+app.use(cookieParser())
 const port = process.env.PORT;
 app.get("/", (req, res) => {
   res.send("Hello");

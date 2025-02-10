@@ -57,10 +57,12 @@ const loginBody=requiredBody.pick({email:true,password:true})
 export const loginUser=async (req,res)=>
   {
     try {
+      console.log("here")
       const { email , password }=req.body
        const parsedBody=loginBody.safeParse(req.body)
        if(!parsedBody.success) return res.status(400).json({message:parsedBody.error})
       const user=await UserModel.findOne({email})
+
     if(!user) return res.status(400).json({message:"Incorrect Credentials1"})
       const passwordMatch=await bcrypt.compare(password,user.password)
     if(!passwordMatch) return res.status(400).json({message:"Incorret Credentials2"})
