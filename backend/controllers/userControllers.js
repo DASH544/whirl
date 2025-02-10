@@ -3,6 +3,10 @@ import getDataUrl from "../utils/urlGenerator.js";
 import cloudinary from "cloudinary";
 import bcrypt from "bcrypt";
 import {z} from "zod"
+const requiredBody=z.object(
+  {
+    name:z.string()
+  })
 export const myProfile = async (req, res) => {
   try {
     const user = await UserModel.findById(req.user._id).select("-password");
@@ -74,6 +78,8 @@ export const updateProfile=async (req,res)=>
     try {
       const user=await UserModel.findById(req.user.id)
       const {name}=req.body
+      const parsedBody=requiredBody.safeParse(req.body)
+      if(!parsedBody.success) return res.status(400).json(parsedBody.error)
       if(name){user.name=name}
       const file=req.file
       if(file)
@@ -95,7 +101,8 @@ export const updateProfile=async (req,res)=>
     }
 
   }
-//add zod validation
+//add zod validation for password regex
+
 export const updatePassword=async(req,res)=>
   {
     try {
