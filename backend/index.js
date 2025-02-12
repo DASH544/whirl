@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import express from "express";
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
 import { connectionDb } from "./db/db.js";
 import cloudinary from "cloudinary";
 //using middlewares
@@ -14,7 +14,7 @@ cloudinary.v2.config({
 });
 
 app.use(express.json());
-app.use(cookieParser())
+app.use(cookieParser());
 const port = process.env.PORT;
 app.get("/", (req, res) => {
   res.send("Hello");
@@ -23,11 +23,13 @@ app.get("/", (req, res) => {
 import userRoutes from "./routes/userRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 
 //using routes
 app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/post", postRoutes);
+app.use("/api/messages", messageRoutes);
 
 app.listen(port, () => {
   console.log(`Server is Runing on http://localhost:${port} `);

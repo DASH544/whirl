@@ -49,38 +49,85 @@ export const deletePost = async (req, res) => {
   }
 };
 export const getAllPosts = async (req, res) => {
-    try {
-  const posts = await PostModel.find({ type: "post" })
-    .sort({ createdAt: -1 })
-    .populate("owner","-password");
+  try {
+    const posts = await PostModel.find({ type: "post" })
+      .sort({ createdAt: -1 })
+      .populate("owner", "-password");
     const reels = await PostModel.find({ type: "reel" })
-    .sort({ createdAt: -1 })
-    .populate("owner","-password");
-    res.status(200).json({posts,reels})
-} catch (error) {
-        res.status(500).json(error.message)
-}
+      .sort({ createdAt: -1 })
+      .populate("owner", "-password");
+    res.status(200).json({ posts, reels });
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 };
-export const likeUnlikePost=async (req,res)=>
+export const likeUnlikePost = async (req, res) => {
+  try {
+    const post = await PostModel.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "No Post Found" });
+    if (post.likes.includes(req.user._id)) {
+      const index = post.likes.indexOf(req.user._id);
+      post.likes.splice(index, 1);
+      await post.save();
+      res.status(201).json({ message: "Post Unliked" });
+    } else {
+      post.likes.push(req.user._id);
+      await post.save();
+      res.status(201).json({ message: "Post Liked" });
+    }
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+};
+export const commentOnPost = async (req, res) => {
+  try {
+    const post = await PostModel.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post Not Found" });
+    post.comments.push({
+      user: req.user._id,
+      name: req.user.name,
+      comment: req.body.comment,
+    });
+    await post.save()
+    res.status(201).json({message:"Comment Added Successfully"})
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+};
+export const deleteComment=async (req,res)=>
   {
     try {
-      const post=await PostModel.findById(req.params.id)
-      if(!post) return res.status(404).json({message:"No Post Found"})
-      if(post.likes.includes(req.user._id))
-        {
-          const index=post.likes.indexOf(req.user._id)
-          post.likes.splice(index,1)
-          await post.save()
-          res.status(201).json({message:"Post Unliked"})
-        }
-        else
-        {
-          post.likes.push(req.user._id)
-          await post.save()
-          res.status(201).json({message:"Post Liked"})
-        }
-
+      const post =await PostModel.findById(req.params.id)
+      if(!post) return res.status(404).json({message:"Post Not Found"})
+      if(!req.body.commentId) return res.status(404).json({message:"give comment id"})
+      const commentIndex=post.comments.findIndex((item)=>item._id.toString()===req.body.commentId.toString())
+      if(commentIndex===-1) return res.status(400).json({message:"Comment Not Found"})
+        const comment=post.comments[commentIndex]
+      if(post.owner.toString()===req.user._id.toString()|| comment.user.toString()===req.user._id.toString())
+      {
+        post.comments.splice(commentIndex,1)
+        await post.save()
+        res.status(200).json({message:"Comment Deleted"})
+      }
+      else
+      {
+        return res.status(400).json({message:"Not Authorized To Delete This Comment"})
+      }
     } catch (error) {
       res.status(500).json(error.message)
     }
   }
+  export const editCaption=async (req,res)=>
+    {
+      try {
+        const post =await PostModel.findById(req.params.id)
+        if(!post) return res.status(404).json({message:"Post Not Found"})
+        if(post.owner.toString()!==req.user._id.toString())
+          return res.status(403).json({message:"Not Authorized"})
+        post.caption=req.body.caption
+        await post.save()
+        res.status(201).json({message:"Caption Edited Successfully"})
+      } catch (error) {
+        res.status(500).json(error.message)
+      }
+    }
