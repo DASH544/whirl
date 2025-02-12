@@ -68,6 +68,10 @@ export const getAllChats=async (req,res)=>
                 path:"users",
                 select:"name profilePic"
             })
+            chats.forEach((item)=>
+                {
+                    item.users=item.users.filter(user=>user._id.toString()!==req.user._id.toString())
+                })
 
         res.json(chats)
     }

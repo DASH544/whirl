@@ -2,11 +2,10 @@ import { UserModel } from "../models/userModel.js";
 import getDataUrl from "../utils/urlGenerator.js";
 import cloudinary from "cloudinary";
 import bcrypt from "bcrypt";
-import {z} from "zod"
-const requiredBody=z.object(
-  {
-    name:z.string()
-  })
+import { z } from "zod";
+const requiredBody = z.object({
+  name: z.string(),
+});
 export const myProfile = async (req, res) => {
   try {
     const user = await UserModel.findById(req.user._id).select("-password");
@@ -64,60 +63,73 @@ export const followandUnfollowUser = async (req, res) => {
 export const userFollowerandFollowingData = async (req, res) => {
   try {
     const user = await UserModel.findById(req.params.id)
-       .select("-password")
-       .populate("followers","-password").populate("followings","-password");
-   const followers=user.followers
-   const followings=user.followings
-   res.status(200).json({followers,followings})
+      .select("-password")
+      .populate("followers", "-password")
+      .populate("followings", "-password");
+    const followers = user.followers;
+    const followings = user.followings;
+    res.status(200).json({ followers, followings });
   } catch (error) {
     res.status(500).json(error.message);
   }
 };
-export const updateProfile=async (req,res)=>
-  {
-    try {
-      const user=await UserModel.findById(req.user.id)
-      const {name}=req.body
-      const parsedBody=requiredBody.safeParse(req.body)
-      if(!parsedBody.success) return res.status(400).json(parsedBody.error)
-      if(name){user.name=name}
-      const file=req.file
-      if(file)
-        {
-          const fileUrl=getDataUrl(file)
+export const updateProfile = async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.user.id);
+    const { name } = req.body;
+    const parsedBody = requiredBody.safeParse(req.body);
+    if (!parsedBody.success) return res.status(400).json(parsedBody.error);
+    if (name) {
+      user.name = name;
+    }
+    const file = req.file;
+    if (file) {
+      const fileUrl = getDataUrl(file);
 
-          await cloudinary.v2.uploader.destroy(user.profilePic.id)
-          const myCloud=await cloudinary.v2.uploader.upload(fileUrl.content)
+      await cloudinary.v2.uploader.destroy(user.profilePic.id);
+      const myCloud = await cloudinary.v2.uploader.upload(fileUrl.content);
 
-          user.profilePic.id=myCloud.public_id;
-          user.profilePic.url=myCloud.secure_url;
-        }
-
-        await user.save()
-        res.status(200).json({message:"Profile Updated"})
-
-    } catch (error) {
-      res.status(500).json(error.message)
+      user.profilePic.id = myCloud.public_id;
+      user.profilePic.url = myCloud.secure_url;
     }
 
+    await user.save();
+    res.status(200).json({ message: "Profile Updated" });
+  } catch (error) {
+    res.status(500).json(error.message);
   }
+};
 //add zod validation for password regex
 
-export const updatePassword=async(req,res)=>
-  {
-    try {
-      const user=await UserModel.findById(req.user.id)
-      if(!user) return res.status(404).json({message:"User Not Found"})
-      const {oldPass,newPass}=req.body
+export const updatePassword = async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User Not Found" });
+    const { oldPass, newPass } = req.body;
 
-      const comparePass=await bcrypt.compare(oldPass,user.password)
-    if(!comparePass) return res.status(400).json({message:"Invalid Credentails"})
-      const pass=await bcrypt.hash(newPass,10)
-    user.password=pass
-    await user.save()
-    res.status(200).json({message:"Password Updated Successfully"})
-
-    } catch (error) {
-      res.status(500).json(error.message)
-    }
+    const comparePass = await bcrypt.compare(oldPass, user.password);
+    if (!comparePass)
+      return res.status(400).json({ message: "Invalid Credentails" });
+    const pass = await bcrypt.hash(newPass, 10);
+    user.password = pass;
+    await user.save();
+    res.status(200).json({ message: "Password Updated Successfully" });
+  } catch (error) {
+    res.status(500).json(error.message);
   }
+};
+export const getAllUsers = async (req, res) => {
+  try {
+    const search = req.query.search || "";
+    const users = await UserModel.find({
+      name: {
+        $regex: search,
+        $options: "i",
+      },
+      _id: { $ne: req.user._Id },
+    }).select("-password");
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+};
